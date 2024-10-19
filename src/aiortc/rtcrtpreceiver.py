@@ -49,7 +49,7 @@ from .utils import uint16_add, uint16_gt
 logger = logging.getLogger(__name__)
 
 
-def decoder_worker(loop, input_q, output_q):
+def decoder_worker(loop, input_q, output_q, track):
     codec_name = None
     decoder = None
 
@@ -61,13 +61,22 @@ def decoder_worker(loop, input_q, output_q):
             break
         codec, encoded_frame = task
 
+        if track.metadata_len > 0:
+            metadata = encoded_frame.data[-track.metadata_len:]
+            # remove metadata from data
+            encoded_frame.data = encoded_frame.data[:-track.metadata_len]
+
+
         if codec.name != codec_name:
             decoder = get_decoder(codec)
             codec_name = codec.name
 
         for frame in decoder.decode(encoded_frame):
             # pass the decoded frame to the track
-            asyncio.run_coroutine_threadsafe(output_q.put(frame), loop)
+            if track.metadata_len > 0:
+                asyncio.run_coroutine_threadsafe(output_q.put((frame, metadata)), loop)
+            else:
+                asyncio.run_coroutine_threadsafe(output_q.put(frame), loop)
 
     if decoder is not None:
         del decoder
@@ -192,6 +201,16 @@ class RemoteStreamTrack(MediaStreamTrack):
         if id is not None:
             self._id = id
         self._queue: asyncio.Queue = asyncio.Queue()
+        self._metadata_len: int = 0
+
+    # create getter and setter for metadata_len
+    @property
+    def metadata_len(self) -> int:
+        return self._metadata_len
+    
+    @metadata_len.setter
+    def metadata_len(self, value: int) -> None:
+        self._metadata_len = value
 
     async def recv(self) -> Frame:
         """
@@ -388,6 +407,7 @@ class RTCRtpReceiver:
                     asyncio.get_event_loop(),
                     self.__decoder_queue,
                     self._track._queue,
+                    self._track,
                 ),
             )
             self.__decoder_thread.start()

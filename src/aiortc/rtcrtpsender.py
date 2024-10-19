@@ -270,7 +270,18 @@ class RTCRtpSender:
         self, codec: RTCRtpCodecParameters
     ) -> Optional[RTCEncodedFrame]:
         # Get [Frame|Packet].
-        data = await self.__track.recv()
+        
+        has_metadata = hasattr(self.__track, "metadata_len") and self.__track.metadata_len > 0
+        if has_metadata:
+            data, metadata = await self.__track.recv()
+
+            # check that metadata is exactly metadata_len bytes
+            if len(metadata) != self.__track.metadata_len:
+                print(f"metadata length is {len(metadata)} but expected {self.__track.metadata_len}, setting metadata to metadata_len 00 bytes")
+                metadata = bytes([0] * self.__track.metadata_len)
+
+        else:
+            data = await self.__track.recv()
 
         # If the sender is disabled, drop the frame instead of encoding it.
         # We still want to read from the track in order to avoid frames
@@ -301,6 +312,9 @@ class RTCRtpSender:
         # This may be due to a delay caused by resampling.
         if not payloads:
             return None
+        
+        if has_metadata and payloads and len(payloads) > 0:
+            payloads[-1] = payloads[-1] + metadata # Hopefully this is ok lol HACK 
 
         return RTCEncodedFrame(payloads, timestamp, audio_level)
 
