@@ -54,7 +54,10 @@ class RTCDataChannel(AsyncIOEventEmitter):
     """
 
     def __init__(
-        self, transport, parameters: RTCDataChannelParameters, send_open: bool = True
+        self,
+        transport: "RTCSctpTransport",
+        parameters: RTCDataChannelParameters,
+        send_open: bool = True,
     ) -> None:
         super().__init__()
         self.__bufferedAmount = 0
@@ -69,8 +72,7 @@ class RTCDataChannel(AsyncIOEventEmitter):
             self.__id is None or self.__id < 0 or self.__id > 65534
         ):
             raise ValueError(
-                "ID must be in range 0-65534 "
-                "if data channel is negotiated out-of-band"
+                "ID must be in range 0-65534 if data channel is negotiated out-of-band"
             )
 
         if not self.__parameters.negotiated:
@@ -162,7 +164,7 @@ class RTCDataChannel(AsyncIOEventEmitter):
         return self.__readyState
 
     @property
-    def transport(self):
+    def transport(self) -> "RTCSctpTransport":
         """
         The :class:`RTCSctpTransport` over which data is transmitted.
         """
@@ -212,5 +214,8 @@ class RTCDataChannel(AsyncIOEventEmitter):
                 # to facilitate garbage collection.
                 self.remove_all_listeners()
 
-    def __log_debug(self, msg: str, *args) -> None:
+    def __log_debug(self, msg: str, *args: object) -> None:
         logger.debug(f"RTCDataChannel(%s) {msg}", self.__id, *args)
+
+
+from .rtcsctptransport import RTCSctpTransport  # noqa

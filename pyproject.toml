@@ -1,13 +1,13 @@
 [build-system]
-requires = ["cffi>=1.0.0", "setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiortc"
 description = "An implementation of WebRTC and ORTC"
 readme = "README.rst"
-requires-python = ">=3.8"
-license = { text = "BSD-3-Clause" }
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
 authors = [
     { name = "Jeremy Lainé", email = "jeremy.laine@m4x.org" },
 ]
@@ -15,26 +15,24 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "aioice>=0.9.0,<1.0.0",
-    "av>=9.0.0,<13.0.0",
+    "aioice>=0.10.1,<1.0.0",
+    "av>=14.0.0,<15.0.0",
     "cffi>=1.0.0",
-    "cryptography>=42.0.0",
-    'dataclasses; python_version < "3.7"',
+    "cryptography>=44.0.0",
     "google-crc32c>=1.1",
-    "pyee>=9.0.0",
+    "pyee>=13.0.0",
     "pylibsrtp>=0.10.0",
-    "pyopenssl>=24.0.0",
+    "pyopenssl>=25.0.0",
 ]
 dynamic = ["version"]
 
@@ -59,6 +57,7 @@ source = ["aiortc"]
 [tool.mypy]
 disallow_untyped_calls = true
 disallow_untyped_decorators = true
+disallow_untyped_defs = true
 ignore_missing_imports = true
 mypy_path = "stubs"
 strict_optional = false
@@ -72,6 +71,9 @@ select = [
     "W",  # pycodestyle
     "I",  # isort
 ]
+
+[tool.ruff.lint.isort]
+known-third-party = ["aiortc"]
 
 [tool.setuptools.dynamic]
 version = {attr = "aiortc.__version__"}
